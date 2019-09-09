@@ -14,6 +14,7 @@ namespace Microsoft.MixedReality.Toolkit.WindowsMixedReality.Input
     /// <summary>
     /// A Windows Mixed Reality Source Instance.
     /// </summary>
+    [UnityEngine.Scripting.Preserve]
     public abstract class BaseWindowsMixedRealitySource : BaseController
     {
         /// <summary>
@@ -23,6 +24,7 @@ namespace Microsoft.MixedReality.Toolkit.WindowsMixedReality.Input
         /// <param name="sourceHandedness"></param>
         /// <param name="inputSource"></param>
         /// <param name="interactions"></param>
+        [UnityEngine.Scripting.Preserve]
         public BaseWindowsMixedRealitySource(TrackingState trackingState, Handedness sourceHandedness, IMixedRealityInputSource inputSource = null, MixedRealityInteractionMapping[] interactions = null)
                 : base(trackingState, sourceHandedness, inputSource, interactions)
         {

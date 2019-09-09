@@ -27,6 +27,7 @@ namespace Microsoft.MixedReality.Toolkit.WindowsMixedReality.Input
         SupportedControllerType.WindowsMixedReality,
         new[] { Handedness.Left, Handedness.Right },
         "StandardAssets/Textures/MotionController")]
+    [UnityEngine.Scripting.Preserve]
     public class WindowsMixedRealityController : BaseWindowsMixedRealitySource
     {
         /// <summary>
@@ -36,6 +37,7 @@ namespace Microsoft.MixedReality.Toolkit.WindowsMixedReality.Input
         /// <param name="controllerHandedness"></param>
         /// <param name="inputSource"></param>
         /// <param name="interactions"></param>
+        [UnityEngine.Scripting.Preserve]
         public WindowsMixedRealityController(TrackingState trackingState, Handedness controllerHandedness, IMixedRealityInputSource inputSource = null, MixedRealityInteractionMapping[] interactions = null)
                 : base(trackingState, controllerHandedness, inputSource, interactions)
         {
