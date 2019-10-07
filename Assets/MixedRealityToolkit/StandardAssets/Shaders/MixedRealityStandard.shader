@@ -13,6 +13,9 @@ Shader "Mixed Reality Toolkit/Standard"
         _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
         _Metallic("Metallic", Range(0.0, 1.0)) = 0.0
         _Smoothness("Smoothness", Range(0.0, 1.0)) = 0.5
+		[Toggle(_MAT_CAP)] _EnableMatCap("Enable Mat Cap", Float) = 0.0
+		[NoScaleOffset] _MatCap("Mat Cap Texture", 2D) = "white" {}
+		_MatCapStrength("MatCap Strength", Range(0.0, 3.0)) = 2.0
         [Toggle(_CHANNEL_MAP)] _EnableChannelMap("Enable Channel Map", Float) = 0.0
         [NoScaleOffset] _ChannelMap("Channel Map", 2D) = "white" {}
         [Toggle(_NORMAL_MAP)] _EnableNormalMap("Enable Normal Map", Float) = 0.0
@@ -223,6 +226,7 @@ Shader "Mixed Reality Toolkit/Standard"
             #pragma shader_feature _ _ALPHATEST_ON _ALPHABLEND_ON
             #pragma shader_feature _DISABLE_ALBEDO_MAP
             #pragma shader_feature _ _METALLIC_TEXTURE_ALBEDO_CHANNEL_A _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+			#pragma shader_feature _MAT_CAP
             #pragma shader_feature _CHANNEL_MAP
             #pragma shader_feature _NORMAL_MAP
             #pragma shader_feature _EMISSION
@@ -348,6 +352,11 @@ Shader "Mixed Reality Toolkit/Standard"
 #if defined(LIGHTMAP_ON)
                 float2 lightMapUV : TEXCOORD1;
 #endif
+
+#if defined(_MAT_CAP)
+				float2 cap	: TEXCOORD4;
+#endif
+
 #if defined(_VERTEX_COLORS)
                 fixed4 color : COLOR0;
 #endif
@@ -402,6 +411,11 @@ Shader "Mixed Reality Toolkit/Standard"
 
             fixed _Metallic;
             fixed _Smoothness;
+
+#if defined(_MAT_CAP)
+			sampler2D _MatCap;
+			fixed _MatCapStrength;
+#endif
 
 #if defined(_CHANNEL_MAP)
             sampler2D _ChannelMap;
@@ -666,8 +680,13 @@ Shader "Mixed Reality Toolkit/Standard"
                 float3 worldVertexPosition = mul(unity_ObjectToWorld, vertexPosition).xyz;
 #endif
 
-#if defined(_NORMAL) || defined(_VERTEX_EXTRUSION)
+#if defined(_NORMAL) || defined(_VERTEX_EXTRUSION) || defined(_MAT_CAP)
                 fixed3 worldNormal = UnityObjectToWorldNormal(v.normal);
+#endif
+
+#if defined(_MAT_CAP)
+				float3 viewNormal = mul((float3x3)UNITY_MATRIX_V, worldNormal);
+				o.cap.xy = viewNormal.xy * 0.5 + 0.5;
 #endif
 
 #if defined(_VERTEX_EXTRUSION)
@@ -1101,6 +1120,13 @@ Shader "Mixed Reality Toolkit/Standard"
 #endif
                 // Final lighting mix.
                 fixed4 output = albedo;
+
+#if defined(_MAT_CAP)
+				float4 mc = tex2D(_MatCap, i.cap);
+				mc = _Color * mc * _MatCapStrength;
+
+				output = float4(mc.rgb, albedo.a);
+#endif
 #if defined(_SPHERICAL_HARMONICS)
                 fixed3 ambient = i.ambient;
 #else

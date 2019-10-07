@@ -44,6 +44,9 @@ namespace Microsoft.MixedReality.Toolkit.Editor
             public static GUIContent alphaCutoff = new GUIContent("Alpha Cutoff", "Threshold for Alpha Cutoff");
             public static GUIContent metallic = new GUIContent("Metallic", "Metallic Value");
             public static GUIContent smoothness = new GUIContent("Smoothness", "Smoothness Value");
+            public static GUIContent enableMatCap = new GUIContent("MatCap", "Enable MatCap");
+            public static GUIContent matCap = new GUIContent("Mat Cap", "MatCap Texture");
+            public static GUIContent matCapStrength = new GUIContent("Mat Cap Strength", "MatCap Strength");
             public static GUIContent enableChannelMap = new GUIContent("Channel Map", "Enable Channel Map, a Channel Packing Texture That Follows Unity's Standard Channel Setup");
             public static GUIContent channelMap = new GUIContent("Channel Map", "Metallic (Red), Occlusion (Green), Emission (Blue), Smoothness (Alpha)");
             public static GUIContent enableNormalMap = new GUIContent("Normal Map", "Enable Normal Map");
@@ -124,6 +127,9 @@ namespace Microsoft.MixedReality.Toolkit.Editor
         protected MaterialProperty albedoAlphaMode;
         protected MaterialProperty albedoAssignedAtRuntime;
         protected MaterialProperty alphaCutoff;
+        protected MaterialProperty enableMatCap;
+        protected MaterialProperty matCap;
+        protected MaterialProperty matCapStrength;
         protected MaterialProperty enableChannelMap;
         protected MaterialProperty channelMap;
         protected MaterialProperty enableNormalMap;
@@ -211,6 +217,9 @@ namespace Microsoft.MixedReality.Toolkit.Editor
             alphaCutoff = FindProperty("_Cutoff", props);
             metallic = FindProperty("_Metallic", props);
             smoothness = FindProperty("_Smoothness", props);
+            enableMatCap = FindProperty("_EnableMatCap", props);
+            matCap = FindProperty("_MatCap", props);
+            matCapStrength = FindProperty("_MatCapStrength", props);
             enableChannelMap = FindProperty("_EnableChannelMap", props);
             channelMap = FindProperty("_ChannelMap", props);
             enableNormalMap = FindProperty("_EnableNormalMap", props);
@@ -392,6 +401,16 @@ namespace Microsoft.MixedReality.Toolkit.Editor
             if (albedoMap.textureValue == null)
             {
                 materialEditor.ShaderProperty(albedoAssignedAtRuntime, Styles.albedoAssignedAtRuntime, 2);
+            }
+
+            materialEditor.ShaderProperty(enableMatCap, Styles.enableMatCap);
+
+            if (PropertyEnabled(enableMatCap))
+            {
+                EditorGUI.indentLevel += 2;
+                materialEditor.TexturePropertySingleLine(Styles.matCap, matCap);
+                materialEditor.ShaderProperty(matCapStrength, Styles.matCapStrength.text);
+                EditorGUI.indentLevel -= 2;
             }
 
             materialEditor.ShaderProperty(enableChannelMap, Styles.enableChannelMap);
