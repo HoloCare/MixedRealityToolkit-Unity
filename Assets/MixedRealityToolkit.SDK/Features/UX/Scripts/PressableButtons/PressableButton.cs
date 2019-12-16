@@ -25,8 +25,6 @@ namespace Microsoft.MixedReality.Toolkit.UI
         [SerializeField]
         [Tooltip("The object that is being pushed.")]
         protected GameObject movingButtonVisuals = null;
-        
-        public GameObject MovingButtonVisuals { set => movingButtonVisuals = value; }
 
         /// <summary>
         /// Enum for defining space of plane distances.
