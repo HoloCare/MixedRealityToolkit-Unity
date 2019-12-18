@@ -2,6 +2,7 @@
 .gitattributes text
 *.txt text
 *.md text
+*.shader text eol=lf
 
 *.mat merge=unityyamlmerge eol=lf
 *.anim merge=unityyamlmerge eol=lf
