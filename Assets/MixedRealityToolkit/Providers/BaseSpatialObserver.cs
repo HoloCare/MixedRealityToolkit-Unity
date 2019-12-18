@@ -7,7 +7,10 @@ using UnityEngine;
 
 namespace Microsoft.MixedReality.Toolkit.SpatialAwareness
 {
-    public class BaseSpatialObserver : BaseDataProvider, IMixedRealitySpatialAwarenessObserver
+    /// <summary>
+    /// Class providing a base implementation of the <see cref="IMixedRealitySpatialAwarenessObserver"/> interface.
+    /// </summary>
+    public abstract class BaseSpatialObserver : BaseDataProvider, IMixedRealitySpatialAwarenessObserver
     {
         /// <summary>
         /// Constructor.
@@ -17,18 +20,34 @@ namespace Microsoft.MixedReality.Toolkit.SpatialAwareness
         /// <param name="name">The friendly name of the data provider.</param>
         /// <param name="priority">The registration priority of the data provider.</param>
         /// <param name="profile">The configuration profile for the data provider.</param>
-        public BaseSpatialObserver(
+        [System.Obsolete("This constructor is obsolete (registrar parameter is no longer required) and will be removed in a future version of the Microsoft Mixed Reality Toolkit.")]
+        protected BaseSpatialObserver(
             IMixedRealityServiceRegistrar registrar,
             IMixedRealitySpatialAwarenessSystem spatialAwarenessSystem,
             string name = null,
             uint priority = DefaultPriority, 
-            BaseMixedRealityProfile profile = null) : base(registrar, spatialAwarenessSystem, name, priority, profile)
+            BaseMixedRealityProfile profile = null) : this(spatialAwarenessSystem, name, priority, profile)
+        {
+            Registrar = registrar;
+        }
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="spatialAwarenessSystem">The <see cref="SpatialAwareness.IMixedRealitySpatialAwarenessSystem"/> to which the observer is providing data.</param>
+        /// <param name="name">The friendly name of the data provider.</param>
+        /// <param name="priority">The registration priority of the data provider.</param>
+        /// <param name="profile">The configuration profile for the data provider.</param>
+        protected BaseSpatialObserver(
+            IMixedRealitySpatialAwarenessSystem spatialAwarenessSystem,
+            string name = null,
+            uint priority = DefaultPriority,
+            BaseMixedRealityProfile profile = null) : base(spatialAwarenessSystem, name, priority, profile)
         {
             SpatialAwarenessSystem = spatialAwarenessSystem;
 
             SourceId = (SpatialAwarenessSystem != null) ? SpatialAwarenessSystem.GenerateNewSourceId() : 0;
             SourceName = name;
-
         }
 
         /// <summary>
@@ -81,7 +100,7 @@ namespace Microsoft.MixedReality.Toolkit.SpatialAwareness
 
         #endregion IMixedRealityEventSource Implementation
 
-        #region IMixedRealitySpatialAwarenessObserver implementation
+        #region IMixedRealitySpatialAwarenessObserver Implementation
 
         /// <inheritdoc />
         public AutoStartBehavior StartupBehavior { get; set; } = AutoStartBehavior.AutoStart;
@@ -118,6 +137,6 @@ namespace Microsoft.MixedReality.Toolkit.SpatialAwareness
         /// <inheritdoc />
         public virtual void ClearObservations() { }
 
-        #endregion IMixedRealitySpatialAwarenessObserver implementation
+        #endregion IMixedRealitySpatialAwarenessObserver Implementation
     }
 }

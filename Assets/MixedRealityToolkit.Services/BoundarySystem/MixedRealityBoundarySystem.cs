@@ -17,10 +17,29 @@ namespace Microsoft.MixedReality.Toolkit.Boundary
     [HelpURL("https://microsoft.github.io/MixedRealityToolkit-Unity/Documentation/Boundary/BoundarySystemGettingStarted.html")]
     public class MixedRealityBoundarySystem : BaseCoreSystem, IMixedRealityBoundarySystem
     {
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="registrar">The <see cref="IMixedRealityServiceRegistrar"/> instance that loaded the service.</param>
+        /// <param name="profile">The configuration profile for the service.</param>
+        /// <param name="scale">The application's configured <see cref="Utilities.ExperienceScale"/>.</param>
+        [System.Obsolete("This constructor is obsolete (registrar parameter is no longer required) and will be removed in a future version of the Microsoft Mixed Reality Toolkit.")]
         public MixedRealityBoundarySystem(
             IMixedRealityServiceRegistrar registrar,
             MixedRealityBoundaryVisualizationProfile profile,
-            ExperienceScale scale) : base(registrar, profile)
+            ExperienceScale scale) : this(profile, scale)
+        {
+            Registrar = registrar;
+        }
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="profile">The configuration profile for the service.</param>
+        /// <param name="scale">The application's configured <see cref="Utilities.ExperienceScale"/>.</param>
+        public MixedRealityBoundarySystem(
+            MixedRealityBoundaryVisualizationProfile profile,
+            ExperienceScale scale) : base(profile)
         {
             Scale = scale;
         }
@@ -30,9 +49,12 @@ namespace Microsoft.MixedReality.Toolkit.Boundary
         private BoundaryEventData boundaryEventData = null;
 
         /// <inheritdoc/>
+        public override string Name { get; protected set; } = "Mixed Reality Boundary System";
+
+        /// <inheritdoc/>
         public override void Initialize()
         {
-            if (!Application.isPlaying) { return; }
+            if (!Application.isPlaying || !XRDevice.isPresent) { return; }
 
             MixedRealityBoundaryVisualizationProfile profile = ConfigurationProfile as MixedRealityBoundaryVisualizationProfile;
             if (profile == null) { return; }
@@ -87,7 +109,6 @@ namespace Microsoft.MixedReality.Toolkit.Boundary
             // and clean up the parent.
             if (boundaryVisualizationParent != null)
             {
-
                 if (Application.isEditor)
                 {
                     Object.DestroyImmediate(boundaryVisualizationParent);
@@ -181,7 +202,7 @@ namespace Microsoft.MixedReality.Toolkit.Boundary
         /// </summary>
         private void RaiseBoundaryVisualizationChanged()
         {
-            if (!Application.isPlaying) { return; }
+            if (!Application.isPlaying || boundaryEventData == null) { return; }
             boundaryEventData.Initialize(this, ShowFloor, ShowPlayArea, ShowTrackedArea, ShowBoundaryWalls, ShowBoundaryCeiling);
             HandleEvent(boundaryEventData, OnVisualizationChanged);
         }
@@ -209,7 +230,6 @@ namespace Microsoft.MixedReality.Toolkit.Boundary
         /// <summary>
         /// Registers the <see href="https://docs.unity3d.com/ScriptReference/GameObject.html">GameObject</see> to listen for boundary events.
         /// </summary>
-        /// <param name="listener"></param>
         public override void Register(GameObject listener)
         {
             base.Register(listener);
@@ -218,7 +238,6 @@ namespace Microsoft.MixedReality.Toolkit.Boundary
         /// <summary>
         /// UnRegisters the <see href="https://docs.unity3d.com/ScriptReference/GameObject.html">GameObject</see> to listen for boundary events.
         /// /// </summary>
-        /// <param name="listener"></param>
         public override void Unregister(GameObject listener)
         {
             base.Unregister(listener);
@@ -290,7 +309,7 @@ namespace Microsoft.MixedReality.Toolkit.Boundary
         private int ignoreRaycastLayerValue = 2;
 
         private MixedRealityBoundaryVisualizationProfile boundaryVisualizationProfile = null;
-        
+
         /// <inheritdoc/>
         public MixedRealityBoundaryVisualizationProfile BoundaryVisualizationProfile
         {
@@ -570,13 +589,13 @@ namespace Microsoft.MixedReality.Toolkit.Boundary
         }
 
         /// <inheritdoc/>
-        public Edge[] Bounds { get; private set; } = new Edge[0];
+        public Edge[] Bounds { get; private set; } = System.Array.Empty<Edge>();
 
         /// <inheritdoc/>
         public float? FloorHeight { get; private set; } = null;
 
         /// <inheritdoc/>
-        public bool Contains(Vector3 location, UnityBoundary.Type boundaryType = UnityBoundary.Type.TrackedArea)
+        public bool Contains(Vector3 location, BoundaryType boundaryType = BoundaryType.TrackedArea)
         {
             if (!EdgeUtilities.IsValidPoint(location))
             {
@@ -603,7 +622,7 @@ namespace Microsoft.MixedReality.Toolkit.Boundary
             // Boundary coordinates are always "on the floor"
             Vector2 point = new Vector2(location.x, location.z);
 
-            if (boundaryType == UnityBoundary.Type.PlayArea)
+            if (boundaryType == BoundaryType.PlayArea)
             {
                 // Check the inscribed rectangle.
                 if (rectangularBounds != null)
@@ -611,7 +630,7 @@ namespace Microsoft.MixedReality.Toolkit.Boundary
                     return rectangularBounds.IsInsideBoundary(point);
                 }
             }
-            else if (boundaryType == UnityBoundary.Type.TrackedArea)
+            else if (boundaryType == BoundaryType.TrackedArea)
             {
                 // Check the geometry
                 return EdgeUtilities.IsInsideBoundary(Bounds, point);
@@ -892,7 +911,7 @@ namespace Microsoft.MixedReality.Toolkit.Boundary
         private void CalculateBoundaryBounds()
         {
             // Reset the bounds
-            Bounds = new Edge[0];
+            Bounds = System.Array.Empty<Edge>();
             FloorHeight = null;
             rectangularBounds = null;
 
