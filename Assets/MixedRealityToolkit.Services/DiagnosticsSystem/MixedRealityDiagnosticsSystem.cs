@@ -15,11 +15,31 @@ namespace Microsoft.MixedReality.Toolkit.Diagnostics
     [UnityEngine.Scripting.Preserve]
     public class MixedRealityDiagnosticsSystem : BaseCoreSystem, IMixedRealityDiagnosticsSystem
     {
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="registrar">The <see cref="IMixedRealityServiceRegistrar"/> instance that loaded the service.</param>
+        /// <param name="profile">The configuration profile for the service.</param>
+        [System.Obsolete("This constructor is obsolete (registrar parameter is no longer required) and will be removed in a future version of the Microsoft Mixed Reality Toolkit.")]
         [UnityEngine.Scripting.Preserve]
         public MixedRealityDiagnosticsSystem(
             IMixedRealityServiceRegistrar registrar,
-            MixedRealityDiagnosticsProfile profile) : base(registrar, profile)
+            MixedRealityDiagnosticsProfile profile) : this(profile)
+        {
+            Registrar = registrar;
+        }
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="profile">The configuration profile for the service.</param>
+        [UnityEngine.Scripting.Preserve]
+        public MixedRealityDiagnosticsSystem(
+            MixedRealityDiagnosticsProfile profile) : base(profile)
         { }
+
+        /// <inheritdoc/>
+        public override string Name { get; protected set; } = "Mixed Reality Diagnostics System";
 
         /// <summary>
         /// The parent object under which all visualization game objects will be placed.

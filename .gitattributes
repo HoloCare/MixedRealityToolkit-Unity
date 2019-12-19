@@ -2,10 +2,14 @@
 .gitattributes text
 *.txt text
 *.md text
+*.shader text eol=lf
 
-*.asset eol=lf
-*.controller eol=lf
-*.prefab eol=lf
-*.meta eol=lf
-*.mat eol=lf
-*.anim eol=lf
+*.mat merge=unityyamlmerge eol=lf
+*.anim merge=unityyamlmerge eol=lf
+*.unity merge=unityyamlmerge eol=lf
+*.prefab merge=unityyamlmerge eol=lf
+*.physicsMaterial2D merge=unityyamlmerge eol=lf
+*.physicMaterial merge=unityyamlmerge eol=lf
+*.asset merge=unityyamlmerge eol=lf
+*.meta merge=unityyamlmerge eol=lf
+*.controller merge=unityyamlmerge eol=lf
