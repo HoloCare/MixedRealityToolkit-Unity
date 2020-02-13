@@ -9,6 +9,7 @@ namespace Microsoft.MixedReality.Toolkit.Utilities
     /// <summary>
     /// Draws a strip of polygons along the line
     /// </summary>
+    [AddComponentMenu("Scripts/MRTK/Core/StripMeshLineRenderer")]
     public class StripMeshLineRenderer : BaseMixedRealityLineRenderer
     {
         [Header("Strip Mesh Settings")]
@@ -98,6 +99,7 @@ namespace Microsoft.MixedReality.Toolkit.Utilities
             }
         }
 
+        /// <inheritdoc />
         protected override void UpdateLine()
         {
             if (stripMeshRenderer == null)

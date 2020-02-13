@@ -12,26 +12,13 @@ namespace Microsoft.MixedReality.Toolkit.Input
     /// It uses spherical movement around the camera.
     /// Its movement is bound to screenspace, but based in the delta movement of the computer mouse.
     /// </summary>
+    [AddComponentMenu("Scripts/MRTK/SDK/MousePointer")]
     public class MousePointer : BaseMousePointer
     {
-        private MixedRealityMouseInputProfile mouseInputProfile = null;
-
-        private MixedRealityMouseInputProfile MouseInputProfile
-        {
-            get
-            {
-                if (mouseInputProfile == null)
-                {
-                    // Get the profile from the input system's registered mouse device manager.
-                    IMixedRealityMouseDeviceManager mouseManager = (InputSystem as IMixedRealityDataProviderAccess)?.GetDataProvider<IMixedRealityMouseDeviceManager>();
-                    mouseInputProfile = mouseManager?.MouseInputProfile;
-                }
-                return mouseInputProfile;
-            }
-        }
-
+        /// <inheritdoc />
         protected override string ControllerName => "Spatial Mouse Pointer";
 
+        /// <inheritdoc />
         public override void OnPreSceneQuery()
         {
             // screenspace to ray conversion
@@ -55,18 +42,12 @@ namespace Microsoft.MixedReality.Toolkit.Input
             {
                 if (PoseAction == eventData.MixedRealityInputAction && !UseSourcePoseData)
                 {
-                    Vector3 mouseDeltaRotation = Vector3.zero;
-                    mouseDeltaRotation.x += eventData.InputData.x;
-                    mouseDeltaRotation.y += eventData.InputData.y;
-                    if (MouseInputProfile != null)
-                    {
-                        mouseDeltaRotation *= MouseInputProfile.MouseSpeed;
-                    }
-                    UpdateMouseRotation(mouseDeltaRotation);
+                    UpdateMouseRotation(eventData.InputData);
                 }
             }
         }
 
+        /// <inheritdoc />
         public override void OnInputChanged(InputEventData<MixedRealityPose> eventData)
         {
             if (eventData.SourceId == Controller?.InputSource.SourceId)
@@ -96,7 +77,7 @@ namespace Microsoft.MixedReality.Toolkit.Input
                 timeoutTimer = 0.0f;
             }
 
-            transform.Rotate(mouseDeltaRotation, Space.World);
+            transform.Rotate(mouseDeltaRotation, Space.Self);
         }
 
         protected override void Start()
@@ -114,6 +95,7 @@ namespace Microsoft.MixedReality.Toolkit.Input
             Cursor.lockState = CursorLockMode.Locked;
         }
 
+        /// <inheritdoc />
         protected override void SetVisibility(bool visible)
         {
             base.SetVisibility(visible);

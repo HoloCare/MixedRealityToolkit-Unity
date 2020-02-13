@@ -2,138 +2,71 @@
 
 This document outlines the roadmap of the Mixed Reality Toolkit.
 
-# Current Release 
+## Current release
 
-[Microsoft Mixed Reality Toolkit v2.0.0 RC2](https://github.com/Microsoft/MixedRealityToolkit-Unity/releases/tag/v2.0.0-RC2)
+[Microsoft Mixed Reality Toolkit v2.3.0](https://github.com/Microsoft/MixedRealityToolkit-Unity/releases/tag/v2.3.0)
 
-# Upcoming Releases
- 
+## Upcoming releases
+
 | Product | Description | Timeline | Project board |
 | --- | --- | --- | --- |
-|MRTK V2 RC 2| UX update and polish to better support HoloLens 2 interactions. | June 2019 |  |
-|MRTK V2 Release | First release of MRTK V2 that supports HoloLens 1, HoloLens 2, WMR, OpenVR | July 2019 | |
+| [MRTK V2.4](#240) | Next iteration of MRTK | March 2020 | https://github.com/microsoft/MixedRealityToolkit-Unity/milestone/11 |
 
-Release details, including backlog items, can be found on the [GitHub project pages](https://github.com/Microsoft/MixedRealityToolkit-Unity/projects).
+Releases are centered around themes (ex: large feature areas) and are scheduled to occur approximately every 8 weeks.
 
-# Mixed Reality Toolkit (MRTK) Roadmap
+Release details, including backlog items, can be found on the [GitHub milestone pages](https://github.com/Microsoft/MixedRealityToolkit-Unity/milestones). The complete set of open issues can also be found on [GitHub](https://github.com/microsoft/MixedRealityToolkit-Unity/issues).
 
-The Mixed Reality Toolkit (also known as "vNext") is an all-new product, built to be cross MR/AR/VR/XR platform by design. There are two planned pre-releases after which the Mixed Reality Toolkit will become the primary product.
+## Mixed Reality Toolkit (MRTK) roadmap
+
+The Mixed Reality Toolkit is an all-new product, built to be cross MR/AR/VR/XR platform by design. There are two planned pre-releases after which the Mixed Reality Toolkit will become the primary product.
 
 The Mixed Reality Toolkit will require Unity 2018.4.
 
 > When Unity releases an LTS (Long Term Support) product, the Mixed Reality Toolkit will update to the LTS release. MRTK will also support the latest non-beta (ex: 2019.1) tech branch version of Unity, at the time at which MRTK was released.
 
-## New Architecture
+### 2.4.0
 
-The MRTK is being rewritten to be cross AR/VR/MR/XR platform and to be more modular. The core layer will contain the interfaces and definitions required to build manager components (ex: input manager) as well as the abstractions needed to support multiple platforms. The SDK layer is where pre-built / reusable components will be delivered. The SDK will be further modularized to make it simple to opt-in to specific functionality (ex: UX controls).
+For the latest status of the release, please visit the [milestone page]( https://github.com/microsoft/MixedRealityToolkit-Unity/milestone/11).
 
+Status: In development
 
-# Release Plans
-## Alpha - Released 
+Timeline: March/April 2020
 
-The Mixed Reality Toolkit (MRTK) Alpha, released in late July 2018 is being released as a single package (core, sdk and examples) as the team introduces the new architecture. This release does **not** contain all of the features and functionality of the HoloToolkit releases.
+Themes:
 
-The theme(s) for the Alpha release are
+- Stability
+- Developer education
+- User Experience
+- Platform expansion: Hands
 
-- Minimum Viable Product
-    - New architecture
-    - VR Boundary support
-    - Input and Interactions
-    - Locomotion / Teleportation
-    - Standard shader
+**Stability**
 
-Supported platforms 
+Quality and stability are the top priority for this and all Microsoft Mixed Reality Toolkit releases. We will continue to prioritize customer and partner issues that impact the stability of MRTK components.
 
-- Windows Mixed Reality
-    - Immersive Headsets
-    - Microsoft HoloLens
-- OpenVR
+**Developer education**
 
-## Beta - Released 
+[Developer documentation](https://microsoft.github.io/MixedRealityToolkit-Unity) and example scenes are, like stability, an ongoing priority for the MRTK team.
 
-The MRTK Beta release (2018.9.0-Beta) will introduce initial support for modularization. It is also when the vast majority of HoloToolkit features will be added. Supported platforms will be unchanged from the Alpha release.
+**User Experience**
 
-> It is important to note that the goal is feature parity and **not** zero app code change. There will be consolidation of duplicated functionality as well as namespace, component and API changes.
-
-The theme(s) for the Beta release are
-
-- HoloToolkit feature parity
-    - Not including the HoloLens-iOS Spectator View feature
-- Improved Core and SDK layer alignment
-    - Components are expected to move to their "final" layer
-- Core and SDK feature packages
-    - SDK features (ex: UX controls) will be in separate packages 
 - Bug fixes
+- HoloLens Shell parity
+- Graduating experimental features
+- Tests to ensure features do not regress
 
-Supported platforms 
+**Platform expansion: Hands**
 
-- Windows Mixed Reality
-    - Immersive Headsets
-    - Microsoft HoloLens
-- OpenVR
+As part of the hand extensibility theme, MRTK plans on adding support for the Leap Motion hands controller and Oculus Quest. Support for Leap Motion is expected to be made available on both Unity 2018.4 and 2019. Oculus Quest, including articulated hands, will be delivered via [Unity's new XR platform](https://blogs.unity3d.com/2020/01/24/unity-xr-platform-updates/).
 
-## Beta 2 - Released 
+## Backlog
 
-The Beta 2 (v2.0.0-Beta2) release marks the first official release of MRTK vNext and will support the same platforms as the Beta. With this release, the Mixed Reality Toolkit will replace the HoloToolkit, which will be transitioned into sustained engineering mode.
+The following list highlights some of the key investments the MRTK team intends to pursue.
 
-The theme(s) for the Beta 2 release are
-
-- Documentation 
-- Quality and Performance 
-
-Supported platforms 
-
-- Windows Mixed Reality
-    - Immersive Headsets
-    - Microsoft HoloLens
-- OpenVR
-
-## RC1 - Released
-
-RC1 release (v2.0.0-RC1) was the first update to include HoloLens 2 capabilities
-
-The theme(s) for the release are
-
-- HoloLens 2 support
-- API contract complete 
-
-Supported platforms
-
-- Windows Mixed Reality
-    - Immersive Headsets
-    - Microsoft HoloLens
-    - HoloLens 2
-- OpenVR
-
-## RC2 - Planned 
-
-RC2 release is planned to add and polish features to support HoloLens 2 interactions with hands and eyes.
-
-The theme(s) for the release are
-
-- UX Polish 
-- Performance 
-
-Supported platforms
-
-- Windows Mixed Reality
-    - Immersive Headsets
-    - Microsoft HoloLens
-    - HoloLens 2
-- OpenVR
-
-## MRTK V2 Release - Planned 
-
-First official release of MRTK V2 that includes HoloLens 2 support and addresses critical feedbacks from microsoft partners and community partners! 
-
-The theme(s) for the release are
-
-- Address feedback issues. 
-
-Supported platforms
-
-- Windows Mixed Reality
-    - Immersive Headsets
-    - Microsoft HoloLens
-    - HoloLens 2
-- OpenVR
+- Platform expansion
+- Extensibility
+- Modularity
+- Accessibility features
+- Globalization enhancements
+- Packaging
+- Cloud service support
+- Tools

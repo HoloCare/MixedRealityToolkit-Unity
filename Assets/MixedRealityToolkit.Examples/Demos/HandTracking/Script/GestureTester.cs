@@ -7,35 +7,25 @@ using UnityEngine;
 
 namespace Microsoft.MixedReality.Toolkit.Examples
 {
+    [AddComponentMenu("Scripts/MRTK/Examples/GestureTester")]
     public class GestureTester : MonoBehaviour, IMixedRealityGestureHandler<Vector3>
     {
         public GameObject HoldIndicator = null;
         public GameObject ManipulationIndicator = null;
         public GameObject NavigationIndicator = null;
+        public GameObject SelectIndicator = null;
 
         public Material DefaultMaterial = null;
         public Material HoldMaterial = null;
         public Material ManipulationMaterial = null;
         public Material NavigationMaterial = null;
+        public Material SelectMaterial = null;
 
         public GameObject RailsAxisX = null;
         public GameObject RailsAxisY = null;
         public GameObject RailsAxisZ = null;
 
-        private IMixedRealityInputSystem inputSystem = null;
-        private IMixedRealityInputSystem InputSystem
-        {
-            get
-            {
-                if (inputSystem == null)
-                {
-                    MixedRealityServiceRegistry.TryGetService<IMixedRealityInputSystem>(out inputSystem);
-                }
-                return inputSystem;
-            }
-        }
-
-        void OnEnable()
+        private void OnEnable()
         {
             HideRails();
         }
@@ -58,6 +48,8 @@ namespace Microsoft.MixedReality.Toolkit.Examples
                 SetIndicator(NavigationIndicator, $"Navigation: started {Vector3.zero}", NavigationMaterial, Vector3.zero);
                 ShowRails(Vector3.zero);
             }
+            
+            SetIndicator(SelectIndicator, "Select:", DefaultMaterial);
         }
 
         public void OnGestureUpdated(InputEventData eventData)
@@ -95,6 +87,10 @@ namespace Microsoft.MixedReality.Toolkit.Examples
             if (action == "Hold Action")
             {
                 SetIndicator(HoldIndicator, "Hold: completed", DefaultMaterial);
+            }
+            else if (action == "Select")
+            {
+                SetIndicator(SelectIndicator, "Select: completed", SelectMaterial);
             }
         }
 
@@ -162,7 +158,7 @@ namespace Microsoft.MixedReality.Toolkit.Examples
 
         private void ShowRails(Vector3 position)
         {
-            var gestureProfile = InputSystem.InputSystemProfile.GesturesProfile;
+            var gestureProfile = CoreServices.InputSystem.InputSystemProfile.GesturesProfile;
             var useRails = gestureProfile.UseRailsNavigation;
 
             if (RailsAxisX)

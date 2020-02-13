@@ -3,7 +3,6 @@
 
 using Microsoft.MixedReality.Toolkit.Utilities;
 using System;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
@@ -128,30 +127,116 @@ namespace Microsoft.MixedReality.Toolkit.Input
         /// </summary>
         internal void SetDefaultInteractionMapping(bool overwrite = false)
         {
-            var detectedController = Activator.CreateInstance(controllerType, TrackingState.NotTracked, handedness, null, null) as BaseController;
-
-            if (detectedController != null && (interactions == null || interactions.Length == 0 || overwrite))
+            if (interactions == null || interactions.Length == 0 || overwrite)
             {
-                switch (handedness)
+                MixedRealityInteractionMapping[] defaultMappings = GetDefaultInteractionMappings();
+
+                if (defaultMappings != null)
                 {
-                    case Handedness.Left:
-                        interactions = detectedController.DefaultLeftHandedInteractions;
-                        break;
-                    case Handedness.Right:
-                        interactions = detectedController.DefaultRightHandedInteractions;
-                        break;
-                    default:
-                        interactions = detectedController.DefaultInteractions;
-                        break;
+                    interactions = defaultMappings;
                 }
             }
         }
 
+        internal bool UpdateInteractionSettingsFromDefault()
+        {
+            if (interactions == null || interactions.Length == 0) { return false; }
+
+            MixedRealityInteractionMapping[] newDefaultInteractions = GetDefaultInteractionMappings();
+
+            if (newDefaultInteractions == null)
+            {
+                return false;
+            }
+
+            if (interactions.Length != newDefaultInteractions.Length)
+            {
+                interactions = CreateNewMatchedMapping(interactions, newDefaultInteractions);
+                return true;
+            }
+
+            bool updatedMappings = false;
+
+            for (int i = 0; i < newDefaultInteractions.Length; i++)
+            {
+                MixedRealityInteractionMapping currentMapping = interactions[i];
+                MixedRealityInteractionMapping currentDefaultMapping = newDefaultInteractions[i];
+
+                if (Equals(currentMapping, currentDefaultMapping))
+                {
+                    interactions[i] = new MixedRealityInteractionMapping(currentDefaultMapping)
+                    {
+                        MixedRealityInputAction = currentMapping.MixedRealityInputAction
+                    };
+
+                    updatedMappings = true;
+                }
+            }
+
+            return updatedMappings;
+        }
+
+        private MixedRealityInteractionMapping[] CreateNewMatchedMapping(MixedRealityInteractionMapping[] interactions, MixedRealityInteractionMapping[] newDefaultInteractions)
+        {
+            MixedRealityInteractionMapping[] newDefaultMapping = new MixedRealityInteractionMapping[newDefaultInteractions.Length];
+
+            for (int i = 0; i < newDefaultInteractions.Length; i++)
+            {
+                for (int j = 0; j < interactions.Length; j++)
+                {
+                    if (Equals(interactions[j], newDefaultInteractions[i]))
+                    {
+                        newDefaultMapping[i] = new MixedRealityInteractionMapping(newDefaultInteractions[i])
+                        {
+                            MixedRealityInputAction = interactions[j].MixedRealityInputAction
+                        };
+                        break;
+                    }
+                }
+
+                if (newDefaultMapping[i] == null)
+                {
+                    newDefaultMapping[i] = new MixedRealityInteractionMapping(newDefaultInteractions[i]);
+                }
+            }
+
+            return newDefaultMapping;
+        }
+
+        private bool Equals(MixedRealityInteractionMapping a, MixedRealityInteractionMapping b)
+        {
+            return !(a.Description != b.Description ||
+                        a.AxisType != b.AxisType ||
+                        a.InputType != b.InputType ||
+                        a.KeyCode != b.KeyCode ||
+                        a.AxisCodeX != b.AxisCodeX ||
+                        a.AxisCodeY != b.AxisCodeY ||
+                        a.InvertXAxis != b.InvertXAxis ||
+                        a.InvertYAxis != b.InvertYAxis);
+        }
+
+        private MixedRealityInteractionMapping[] GetDefaultInteractionMappings()
+        {
+            if (Activator.CreateInstance(controllerType, TrackingState.NotTracked, handedness, null, null) is BaseController detectedController)
+            {
+                switch (handedness)
+                {
+                    case Handedness.Left:
+                        return detectedController.DefaultLeftHandedInteractions;
+                    case Handedness.Right:
+                        return detectedController.DefaultRightHandedInteractions;
+                    default:
+                        return detectedController.DefaultInteractions;
+                }
+            }
+
+            return null;
+        }
+
         /// <summary>
-        /// Synchronizes the Input Actions of the same physical controller of a different concrete type.
+        /// Synchronizes the input actions of the same physical controller of a different concrete type.
         /// </summary>
-        /// <param name="otherControllerMapping"></param>
-        internal void SynchronizeInputActions(MixedRealityInteractionMapping[] otherControllerMapping) 
+        internal void SynchronizeInputActions(MixedRealityInteractionMapping[] otherControllerMapping)
         {
             if (otherControllerMapping.Length != interactions.Length)
             {

@@ -34,6 +34,11 @@ namespace Microsoft.MixedReality.Toolkit
         public virtual SupportedPlatforms RuntimePlatforms { get; }
 
         /// <summary>
+        /// Is a profile explicitly required?
+        /// </summary>
+        public virtual bool RequiresProfile { get; }
+
+        /// <summary>
         /// The file path to the default profile asset relative to the package folder.
         /// </summary>
         public virtual string DefaultProfilePath { get; }
@@ -51,12 +56,26 @@ namespace Microsoft.MixedReality.Toolkit
             get
             {
 #if UNITY_EDITOR
-                string path;
-                if (EditorProjectUtilities.FindRelativeDirectory(PackageFolder, out path))
+                MixedRealityToolkitModuleType moduleType = MixedRealityToolkitFiles.GetModuleFromPackageFolder(PackageFolder);
+
+                if (moduleType != MixedRealityToolkitModuleType.None)
                 {
-                    return AssetDatabase.LoadAssetAtPath<BaseMixedRealityProfile>(System.IO.Path.Combine(path, DefaultProfilePath));
+                    string folder = MixedRealityToolkitFiles.MapModulePath(moduleType);
+                    if (!string.IsNullOrWhiteSpace(folder))
+                    {
+                        return AssetDatabase.LoadAssetAtPath<BaseMixedRealityProfile>(System.IO.Path.Combine(folder, DefaultProfilePath));
+                    }
+                }
+                else
+                {
+                    string folder;
+                    if (EditorProjectUtilities.FindRelativeDirectory(PackageFolder, out folder))
+                    {
+                        return AssetDatabase.LoadAssetAtPath<BaseMixedRealityProfile>(System.IO.Path.Combine(folder, DefaultProfilePath));
+                    }
                 }
 
+                // If we get here, there was an issue finding the profile.
                 Debug.LogError("Unable to find or load the profile.");
 #endif  
                 return null;
@@ -73,12 +92,14 @@ namespace Microsoft.MixedReality.Toolkit
             SupportedPlatforms runtimePlatforms,
             string name = "",
             string defaultProfilePath = "",
-            string packageFolder = "MixedRealityToolkit")
+            string packageFolder = "MixedRealityToolkit",
+            bool requiresProfile = false)
         {
             RuntimePlatforms = runtimePlatforms;
             Name = name;
             DefaultProfilePath = defaultProfilePath;
             PackageFolder = packageFolder;
+            RequiresProfile = requiresProfile;
         }
 
 #if UNITY_EDITOR

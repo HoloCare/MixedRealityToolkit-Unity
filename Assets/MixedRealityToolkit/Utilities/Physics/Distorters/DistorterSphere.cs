@@ -9,6 +9,7 @@ namespace Microsoft.MixedReality.Toolkit.Physics
     /// A Distorter that distorts points based on their distance and direction from the
     /// center of the sphere of size 2.
     /// </summary>
+    [AddComponentMenu("Scripts/MRTK/Core/DistorterSphere")]
     public class DistorterSphere : Distorter
     {
         public Vector3 SphereCenter
@@ -29,12 +30,14 @@ namespace Microsoft.MixedReality.Toolkit.Physics
         [SerializeField]
         private float radius = 2f;
 
+        /// <inheritdoc />
         protected override Vector3 DistortPointInternal(Vector3 point, float strength)
         {
             Vector3 direction = (point - SphereCenter).normalized;
             return Vector3.Lerp(point, SphereCenter + (direction * radius), strength);
         }
 
+        /// <inheritdoc />
         protected override Vector3 DistortScaleInternal(Vector3 point, float strength)
         {
             return Vector3.one;

@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace Microsoft.MixedReality.Toolkit.Physics
 {
+    [AddComponentMenu("Scripts/MRTK/Core/DistorterWiggly")]
     public class DistorterWiggly : Distorter
     {
         private const float MinScaleMultiplier = 0.05f;
@@ -81,6 +82,7 @@ namespace Microsoft.MixedReality.Toolkit.Physics
             set { axisOffset = value; }
         }
 
+        /// <inheritdoc />
         protected override Vector3 DistortPointInternal(Vector3 point, float strength)
         {
             Vector3 wiggly = point;
@@ -91,6 +93,7 @@ namespace Microsoft.MixedReality.Toolkit.Physics
             return point + (wiggly * strength);
         }
 
+        /// <inheritdoc />
         protected override Vector3 DistortScaleInternal(Vector3 point, float strength)
         {
             return point;

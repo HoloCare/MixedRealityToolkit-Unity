@@ -16,30 +16,11 @@ namespace Microsoft.MixedReality.Toolkit.Input
         /// <summary>
         /// Constructor.
         /// </summary>
-        /// <param name="pointerName"></param>
-        /// <param name="inputSourceParent"></param>
-        public GenericPointer(string pointerName, IMixedRealityInputSource inputSourceParent)
+        protected GenericPointer(string pointerName, IMixedRealityInputSource inputSourceParent)
         {
-            PointerId = (InputSystem?.FocusProvider != null) ? InputSystem.FocusProvider.GenerateNewPointerId() : 0;
+            PointerId = (CoreServices.InputSystem?.FocusProvider != null) ? CoreServices.InputSystem.FocusProvider.GenerateNewPointerId() : 0;
             PointerName = pointerName;
             this.inputSourceParent = inputSourceParent;
-        }
-
-        private IMixedRealityInputSystem inputSystem = null;
-
-        /// <summary>
-        /// The active instance of the input system.
-        /// </summary>
-        protected IMixedRealityInputSystem InputSystem
-        {
-            get
-            {
-                if (inputSystem == null)
-                {
-                    MixedRealityServiceRegistry.TryGetService<IMixedRealityInputSystem>(out inputSystem);
-                }
-                return inputSystem;
-            }
         }
 
         /// <inheritdoc />
@@ -150,6 +131,9 @@ namespace Microsoft.MixedReality.Toolkit.Input
         /// <inheritdoc />
         public abstract void OnPreCurrentPointerTargetChange();
 
+        /// <inheritdoc />
+        public abstract void Reset();
+
         #region IEquality Implementation
 
         public static bool Equals(IMixedRealityPointer left, IMixedRealityPointer right)
@@ -181,6 +165,7 @@ namespace Microsoft.MixedReality.Toolkit.Input
             return obj.GetHashCode();
         }
 
+        /// <inheritdoc />
         public override int GetHashCode()
         {
             unchecked

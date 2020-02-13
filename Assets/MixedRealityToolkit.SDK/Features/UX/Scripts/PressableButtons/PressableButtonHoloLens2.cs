@@ -9,6 +9,7 @@ namespace Microsoft.MixedReality.Toolkit.UI
     ///<summary>
     /// HoloLens 2 shell's style button specific elements
     ///</summary>
+    [AddComponentMenu("Scripts/MRTK/SDK/PressableButtonHoloLens2")]
     public class PressableButtonHoloLens2 : PressableButton
     {
         [SerializeField]
@@ -106,6 +107,7 @@ namespace Microsoft.MixedReality.Toolkit.UI
             }
         }
 
+        /// <inheritdoc />
         protected override void UpdateMovingVisualsPosition()
         {
             base.UpdateMovingVisualsPosition();

@@ -8,6 +8,7 @@ namespace Microsoft.MixedReality.Toolkit.Utilities.Solvers
     /// <summary>
     /// ConstantViewSize solver scales to maintain a constant size relative to the view (currently tied to the Camera)
     /// </summary>
+    [AddComponentMenu("Scripts/MRTK/SDK/ConstantViewSize")]
     public class ConstantViewSize : Solver
     {
         #region ConstantViewSize Parameters
@@ -141,8 +142,9 @@ namespace Microsoft.MixedReality.Toolkit.Utilities.Solvers
         private float fovScalar = 1f;
         private float objectSize = 1f;
 
-        protected virtual void Start()
+        protected override void Start()
         {
+            base.Start();
             RecalculateBounds();
         }
 
@@ -187,7 +189,7 @@ namespace Microsoft.MixedReality.Toolkit.Utilities.Solvers
         }
 
         /// <summary>
-        /// Attempts to calculate the size of the bounds which contains all child renderers for attached gameobject. This information is used in the core solver calculations
+        /// Attempts to calculate the size of the bounds which contains all child renderers for attached GameObject. This information is used in the core solver calculations
         /// </summary>
         public void RecalculateBounds()
         {

@@ -10,6 +10,7 @@ namespace Microsoft.MixedReality.Toolkit.Utilities
     /// per pixel based clipping.
     /// </summary>
     [ExecuteInEditMode]
+    [AddComponentMenu("Scripts/MRTK/Core/ClippingSphere")]
     public class ClippingSphere : ClippingPrimitive
     {
         /// <summary>
@@ -26,11 +27,13 @@ namespace Microsoft.MixedReality.Toolkit.Utilities
 
         private int clipSphereID;
 
+        /// <inheritdoc />
         protected override string Keyword
         {
             get { return "_CLIPPING_SPHERE"; }
         }
 
+        /// <inheritdoc />
         protected override string ClippingSideProperty
         {
             get { return "_ClipSphereSide"; }
@@ -44,6 +47,7 @@ namespace Microsoft.MixedReality.Toolkit.Utilities
             }
         }
 
+        /// <inheritdoc />
         protected override void Initialize()
         {
             base.Initialize();
@@ -51,6 +55,7 @@ namespace Microsoft.MixedReality.Toolkit.Utilities
             clipSphereID = Shader.PropertyToID("_ClipSphere");
         }
 
+        /// <inheritdoc />
         protected override void UpdateShaderProperties(MaterialPropertyBlock materialPropertyBlock)
         {
             Vector3 position = transform.position;

@@ -50,6 +50,7 @@ namespace Microsoft.MixedReality.Toolkit.Utilities.Editor
             ".mat",
             ".anim",
             ".controller",
+            ".playable",
         };
 
         private readonly string[] assetsWithMetaDependencies =
@@ -160,7 +161,7 @@ namespace Microsoft.MixedReality.Toolkit.Utilities.Editor
         {
             if (EditorSettings.serializationMode != SerializationMode.ForceText)
             {
-                EditorGUILayout.BeginHorizontal();
+                using (new EditorGUILayout.HorizontalScope())
                 {
                     EditorGUILayout.HelpBox("Dependencies can only be tracked with text assets. Please change the project serialization mode to \"Force Text\"", MessageType.Error);
 
@@ -169,13 +170,12 @@ namespace Microsoft.MixedReality.Toolkit.Utilities.Editor
                         EditorSettings.serializationMode = SerializationMode.ForceText;
                     }
                 }
-                EditorGUILayout.EndHorizontal();
             }
         }
 
         private void DrawDependencyGraphStatistics()
         {
-            EditorGUILayout.BeginHorizontal();
+            using (new EditorGUILayout.HorizontalScope())
             {
                 if (dependencyGraph.Count == 0)
                 {
@@ -191,8 +191,6 @@ namespace Microsoft.MixedReality.Toolkit.Utilities.Editor
                     RefreshDependencyGraph();
                 }
             }
-            EditorGUILayout.EndHorizontal();
-
             EditorGUILayout.Space();
 
             if (GUI.enabled)
@@ -335,7 +333,6 @@ namespace Microsoft.MixedReality.Toolkit.Utilities.Editor
                 }
 
                 string guid = GetGuidFromMeta(metaFile);
-
                 if (!IsGuidValid(guid))
                 {
                     continue;
@@ -414,7 +411,8 @@ namespace Microsoft.MixedReality.Toolkit.Utilities.Editor
 
         private static bool IsGuidValid(string guid)
         {
-            return !string.IsNullOrEmpty(guid) && guid != nullGuid;
+            return !string.IsNullOrEmpty(guid) && guid != nullGuid
+            && !string.IsNullOrEmpty(Path.GetExtension(AssetDatabase.GUIDToAssetPath(guid)));
         }
 
         private static string GetGuidFromMeta(string file)
@@ -475,7 +473,7 @@ namespace Microsoft.MixedReality.Toolkit.Utilities.Editor
 
         private static void DrawDependencyGraphNode(DependencyGraphNode node, int depth, int maxDepth)
         {
-            EditorGUILayout.BeginHorizontal();
+            using (new EditorGUILayout.HorizontalScope())
             {
                 GUILayout.Space(depth * 8);
 
@@ -495,7 +493,6 @@ namespace Microsoft.MixedReality.Toolkit.Utilities.Editor
                     EditorGUILayout.LabelField("Max display depth was exceeded...");
                 }
             }
-            EditorGUILayout.EndHorizontal();
         }
 
         private static void DrawDependencyGraphNodeRecurse(DependencyGraphNode node, int depth, int maxDepth)

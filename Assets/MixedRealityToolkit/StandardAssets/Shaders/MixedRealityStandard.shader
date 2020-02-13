@@ -37,6 +37,7 @@ Shader "Mixed Reality Toolkit/Standard"
         [Toggle(_VERTEX_COLORS)] _VertexColors("Vertex Colors", Float) = 0.0
         [Toggle(_VERTEX_EXTRUSION)] _VertexExtrusion("Vertex Extrusion", Float) = 0.0
         _VertexExtrusionValue("Vertex Extrusion Value", Float) = 0.0
+        [Toggle(_VERTEX_EXTRUSION_SMOOTH_NORMALS)] _VertexExtrusionSmoothNormals("Vertex Extrusion Smooth Normals", Float) = 0.0
         _BlendedClippingWidth("Blended Clipping With", Range(0.0, 10.0)) = 1.0
         [Toggle(_CLIPPING_BORDER)] _ClippingBorder("Clipping Border", Float) = 0.0
         _ClippingBorderWidth("Clipping Border Width", Range(0.0, 1.0)) = 0.025
@@ -62,6 +63,8 @@ Shader "Mixed Reality Toolkit/Standard"
         [Toggle(_ROUND_CORNERS)] _RoundCorners("Round Corners", Float) = 0.0
         _RoundCornerRadius("Round Corner Radius", Range(0.0, 0.5)) = 0.25
         _RoundCornerMargin("Round Corner Margin", Range(0.0, 0.5)) = 0.01
+        [Toggle(_INDEPENDENT_CORNERS)] _IndependentCorners("Independent Corners", Float) = 0.0
+        _RoundCornersRadius("Round Corners Radius", Vector) = (0.5 ,0.5, 0.5, 0.5)
         [Toggle(_BORDER_LIGHT)] _BorderLight("Border Light", Float) = 0.0
         [Toggle(_BORDER_LIGHT_USES_HOVER_COLOR)] _BorderLightUsesHoverColor("Border Light Uses Hover Color", Float) = 0.0
         [Toggle(_BORDER_LIGHT_REPLACES_ALBEDO)] _BorderLightReplacesAlbedo("Border Light Replaces Albedo", Float) = 0.0
@@ -207,9 +210,6 @@ Shader "Mixed Reality Toolkit/Standard"
 
             CGPROGRAM
 
-#if defined(SHADER_API_D3D11)
-            #pragma target 5.0
-#endif
             #pragma vertex vert
             #pragma fragment frag
 
@@ -236,6 +236,7 @@ Shader "Mixed Reality Toolkit/Standard"
             #pragma shader_feature _RIM_LIGHT
             #pragma shader_feature _VERTEX_COLORS
             #pragma shader_feature _VERTEX_EXTRUSION
+            #pragma shader_feature _VERTEX_EXTRUSION_SMOOTH_NORMALS
             #pragma shader_feature _CLIPPING_BORDER
             #pragma shader_feature _NEAR_PLANE_FADE
             #pragma shader_feature _NEAR_LIGHT_FADE
@@ -246,6 +247,7 @@ Shader "Mixed Reality Toolkit/Standard"
             #pragma shader_feature _PROXIMITY_LIGHT_SUBTRACTIVE
             #pragma shader_feature _PROXIMITY_LIGHT_TWO_SIDED
             #pragma shader_feature _ROUND_CORNERS
+			#pragma shader_feature _INDEPENDENT_CORNERS
             #pragma shader_feature _BORDER_LIGHT
             #pragma shader_feature _BORDER_LIGHT_USES_HOVER_COLOR
             #pragma shader_feature _BORDER_LIGHT_REPLACES_ALBEDO
@@ -296,7 +298,7 @@ Shader "Mixed Reality Toolkit/Standard"
             #undef _TRANSPARENT
 #endif
 
-#if defined(_ROUND_CORNERS) || defined(_BORDER_LIGHT)
+#if defined(_VERTEX_EXTRUSION) || defined(_ROUND_CORNERS) || defined(_BORDER_LIGHT)
             #define _SCALE
 #else
             #undef _SCALE
@@ -323,10 +325,16 @@ Shader "Mixed Reality Toolkit/Standard"
             struct appdata_t
             {
                 float4 vertex : POSITION;
+                // The default UV channel used for texturing.
                 float2 uv : TEXCOORD0;
 #if defined(LIGHTMAP_ON)
-                float2 lightMapUV : TEXCOORD1;
+                // Reserved for Unity's light map UVs.
+                float2 uv1 : TEXCOORD1;
 #endif
+                // Used for smooth normal data (or UGUI scaling data).
+                float4 uv2 : TEXCOORD2;
+                // Used for UGUI scaling data.
+                float2 uv3 : TEXCOORD3;
 #if defined(_VERTEX_COLORS)
                 fixed4 color : COLOR0;
 #endif
@@ -504,7 +512,11 @@ Shader "Mixed Reality Toolkit/Standard"
 #endif
 
 #if defined(_ROUND_CORNERS)
+#if defined(_INDEPENDENT_CORNERS)
+            float4 _RoundCornersRadius; 
+#else
             fixed _RoundCornerRadius;
+#endif
             fixed _RoundCornerMargin;
 #endif
 
@@ -666,12 +678,37 @@ Shader "Mixed Reality Toolkit/Standard"
                 float3 worldVertexPosition = mul(unity_ObjectToWorld, vertexPosition).xyz;
 #endif
 
+#if defined(_SCALE)
+                o.scale.x = length(mul(unity_ObjectToWorld, float4(1.0, 0.0, 0.0, 0.0)));
+                o.scale.y = length(mul(unity_ObjectToWorld, float4(0.0, 1.0, 0.0, 0.0)));
+#if defined(_IGNORE_Z_SCALE)
+                o.scale.z = o.scale.x;
+#else
+                o.scale.z = length(mul(unity_ObjectToWorld, float4(0.0, 0.0, 1.0, 0.0)));
+#endif
+#if !defined(_VERTEX_EXTRUSION_SMOOTH_NORMALS)
+                // uv3.y will contain a negative value when rendered by a UGUI and ScaleMeshEffect.
+                if (v.uv3.y < 0.0)
+                {
+                    o.scale.x *= v.uv2.x;
+                    o.scale.y *= v.uv2.y;
+                    o.scale.z *= v.uv3.x;
+                }
+#endif
+#endif
+
+                fixed3 localNormal = v.normal;
+
 #if defined(_NORMAL) || defined(_VERTEX_EXTRUSION)
-                fixed3 worldNormal = UnityObjectToWorldNormal(v.normal);
+                fixed3 worldNormal = UnityObjectToWorldNormal(localNormal);
 #endif
 
 #if defined(_VERTEX_EXTRUSION)
+#if defined(_VERTEX_EXTRUSION_SMOOTH_NORMALS)
+                worldVertexPosition += UnityObjectToWorldNormal(v.uv2 * o.scale) * _VertexExtrusionValue;
+#else
                 worldVertexPosition += worldNormal * _VertexExtrusionValue;
+#endif
                 vertexPosition = mul(unity_WorldToObject, float4(worldVertexPosition, 1.0));
 #endif
 
@@ -705,16 +742,6 @@ Shader "Mixed Reality Toolkit/Standard"
                 o.worldPosition.w = max(saturate(mad(fadeDistance, rangeInverse, -_FadeCompleteDistance * rangeInverse)), _FadeMinValue);
 #endif
 
-#if defined(_SCALE)
-                o.scale.x = length(mul(unity_ObjectToWorld, float4(1.0, 0.0, 0.0, 0.0)));
-                o.scale.y = length(mul(unity_ObjectToWorld, float4(0.0, 1.0, 0.0, 0.0)));
-#if defined(_IGNORE_Z_SCALE)
-                o.scale.z = o.scale.x;
-#else
-                o.scale.z = length(mul(unity_ObjectToWorld, float4(0.0, 0.0, 1.0, 0.0)));
-#endif
-#endif
-
 #if defined(_BORDER_LIGHT) || defined(_ROUND_CORNERS)
                 o.uv.xy = TRANSFORM_TEX(v.uv, _MainTex);
    
@@ -731,7 +758,7 @@ Shader "Mixed Reality Toolkit/Standard"
                 float borderWidth = _BorderWidth;
 #endif
 
-                if (abs(v.normal.x) == 1.0) // Y,Z plane.
+                if (abs(localNormal.x) == 1.0) // Y,Z plane.
                 {
                     o.scale.x = o.scale.z;
                     o.scale.y = o.scale.y;
@@ -743,7 +770,7 @@ Shader "Mixed Reality Toolkit/Standard"
                     }
 #endif
                 }
-                else if (abs(v.normal.y) == 1.0) // X,Z plane.
+                else if (abs(localNormal.y) == 1.0) // X,Z plane.
                 {
                     o.scale.x = o.scale.x;
                     o.scale.y = o.scale.z;
@@ -780,7 +807,7 @@ Shader "Mixed Reality Toolkit/Standard"
 #endif
 
 #if defined(LIGHTMAP_ON)
-                o.lightMapUV.xy = v.lightMapUV.xy * unity_LightmapST.xy + unity_LightmapST.zw;
+                o.lightMapUV.xy = v.uv1.xy * unity_LightmapST.xy + unity_LightmapST.zw;
 #endif
 
 #if defined(_VERTEX_COLORS)
@@ -802,7 +829,7 @@ Shader "Mixed Reality Toolkit/Standard"
 #if defined(_TRIPLANAR_MAPPING)
                 o.worldNormal = worldNormal;
 #if defined(_LOCAL_SPACE_TRIPLANAR_MAPPING)
-                o.triplanarNormal = v.normal;
+                o.triplanarNormal = localNormal;
                 o.triplanarPosition = vertexPosition;
 #else
                 o.triplanarNormal = worldNormal;
@@ -823,9 +850,6 @@ Shader "Mixed Reality Toolkit/Standard"
                 return o;
             }
 
-#if defined(SHADER_API_D3D11) && !defined(_ALPHA_CLIP) && !defined(_TRANSPARENT)
-            [earlydepthstencil]
-#endif
             fixed4 frag(v2f i, fixed facing : VFACE) : SV_Target
             {
 #if defined(_INSTANCED_COLOR)
@@ -908,7 +932,40 @@ Shader "Mixed Reality Toolkit/Standard"
                 float2 halfScale = i.scale.xy * 0.5;
                 float2 roundCornerPosition = distanceToEdge * halfScale;
 
-                float cornerCircleRadius = saturate(max(_RoundCornerRadius - _RoundCornerMargin, 0.01)) * i.scale.z;
+                fixed currentCornerRadius;
+
+#if defined(_INDEPENDENT_CORNERS)
+
+                _RoundCornersRadius = clamp(_RoundCornersRadius, 0, 0.5);
+
+                if (i.uv.x < 0.5)
+                {
+                    if (i.uv.y > 0.5)
+                    {
+                        currentCornerRadius = _RoundCornersRadius.x;
+                    }
+                    else
+                    {
+                        currentCornerRadius = _RoundCornersRadius.w;
+                    }
+                }
+                else
+                {
+                    if (i.uv.y > 0.5)
+                    {
+                        currentCornerRadius = _RoundCornersRadius.y;
+                    }
+                    else
+                    {
+                        currentCornerRadius = _RoundCornersRadius.z;
+                    }
+                }
+#else 
+                currentCornerRadius = _RoundCornerRadius;
+#endif
+
+                float cornerCircleRadius = saturate(max(currentCornerRadius - _RoundCornerMargin, 0.01)) * i.scale.z;
+
                 float2 cornerCircleDistance = halfScale - (_RoundCornerMargin * i.scale.z) - cornerCircleRadius;
 
                 float roundCornerClip = RoundCorners(roundCornerPosition, cornerCircleDistance, cornerCircleRadius);
@@ -1018,7 +1075,9 @@ Shader "Mixed Reality Toolkit/Standard"
                 fixed borderValue;
 #if defined(_ROUND_CORNERS)
                 fixed borderMargin = _RoundCornerMargin  + _BorderWidth * 0.5;
-                cornerCircleRadius = saturate(max(_RoundCornerRadius - borderMargin, 0.01)) * i.scale.z;
+
+                cornerCircleRadius = saturate(max(currentCornerRadius - borderMargin, 0.01)) * i.scale.z;
+
                 cornerCircleDistance = halfScale - (borderMargin * i.scale.z) - cornerCircleRadius;
 
                 borderValue =  1.0 - RoundCornersSmooth(roundCornerPosition, cornerCircleDistance, cornerCircleRadius);
@@ -1071,7 +1130,7 @@ Shader "Mixed Reality Toolkit/Standard"
                 fixed diffuse = max(0.0, dot(worldNormal, directionalLightDirection));
 #if defined(_SPECULAR_HIGHLIGHTS)
                 fixed halfVector = max(0.0, dot(worldNormal, normalize(directionalLightDirection + worldViewDir)));
-                fixed specular = saturate(pow(halfVector, _Shininess * pow(_Smoothness, 4.0)) * _Smoothness * 0.5);
+                fixed specular = saturate(pow(halfVector, _Shininess * pow(_Smoothness, 4.0)) * (_Smoothness * 2.0) * _Metallic);
 #else
                 fixed specular = 0.0;
 #endif

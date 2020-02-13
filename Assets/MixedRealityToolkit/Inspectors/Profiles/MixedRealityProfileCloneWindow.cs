@@ -3,6 +3,7 @@
 
 using Microsoft.MixedReality.Toolkit.Utilities.Editor;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
@@ -24,7 +25,7 @@ namespace Microsoft.MixedReality.Toolkit.Editor
             public SubProfileAction(
                 ProfileCloneBehavior behavior,
                 SerializedProperty property,
-                Object substitutionReference, 
+                Object substitutionReference,
                 System.Type profileType)
             {
                 Behavior = behavior;
@@ -46,7 +47,7 @@ namespace Microsoft.MixedReality.Toolkit.Editor
 
         private const string AdvancedModeKey = "MRTK_ProfileCloneWindow_AdvancedMode_Key";
         private static bool AdvancedMode = false;
-        private const string DefaultCustomProfileFolder = "Assets/MixedRealityToolkit.Generated/CustomProfiles";
+        protected static string DefaultCustomProfileFolder => Path.Combine(MixedRealityToolkitFiles.MapModulePath(MixedRealityToolkitModuleType.Generated), "CustomProfiles");
         private const string IsCustomProfileProperty = "isCustomProfile";
         private static readonly Vector2 MinWindowSizeBasic = new Vector2(500, 180);
         private const float SubProfileSizeMultiplier = 95f;
@@ -184,18 +185,19 @@ namespace Microsoft.MixedReality.Toolkit.Editor
                                 {
                                     action.CloneName = EditorGUILayout.TextField("Clone name", action.CloneName);
                                 }
-                                EditorGUILayout.BeginHorizontal();
-                                if (action.TargetFolder == null)
+                                using (new EditorGUILayout.HorizontalScope())
                                 {
-                                    action.TargetFolder = targetFolder;
+                                    if (action.TargetFolder == null)
+                                    {
+                                        action.TargetFolder = targetFolder;
+                                    }
+                                    action.TargetFolder = EditorGUILayout.ObjectField("Target Folder", action.TargetFolder, typeof(DefaultAsset), false);
+                                    if (GUILayout.Button("Put in original folder", EditorStyles.miniButton, GUILayout.MaxWidth(120)))
+                                    {
+                                        string profilePath = AssetDatabase.GetAssetPath(action.Property.objectReferenceValue);
+                                        action.TargetFolder = AssetDatabase.LoadAssetAtPath<Object>(System.IO.Path.GetDirectoryName(profilePath));
+                                    }
                                 }
-                                action.TargetFolder = EditorGUILayout.ObjectField("Target Folder", action.TargetFolder, typeof(DefaultAsset), false);
-                                if (GUILayout.Button("Put in original folder", EditorStyles.miniButton, GUILayout.MaxWidth(120)))
-                                {
-                                    string profilePath = AssetDatabase.GetAssetPath(action.Property.objectReferenceValue);
-                                    action.TargetFolder = AssetDatabase.LoadAssetAtPath<Object>(System.IO.Path.GetDirectoryName(profilePath));
-                                }
-                                EditorGUILayout.EndHorizontal();
                                 break;
 
                             case ProfileCloneBehavior.LeaveEmpty:
@@ -215,31 +217,32 @@ namespace Microsoft.MixedReality.Toolkit.Editor
             GUILayout.FlexibleSpace();
 
             // Get the selected folder in the project window
-            EditorGUILayout.BeginHorizontal();
-            targetFolder = EditorGUILayout.ObjectField("Target Folder", targetFolder, typeof(DefaultAsset), false);
-            if (GUILayout.Button("Put in original folder", EditorStyles.miniButton, GUILayout.MaxWidth(120)))
+            using (new EditorGUILayout.HorizontalScope())
             {
-                string profilePath = AssetDatabase.GetAssetPath(childProfile);
-                targetFolder = AssetDatabase.LoadAssetAtPath<Object>(System.IO.Path.GetDirectoryName(profilePath));
+                targetFolder = EditorGUILayout.ObjectField("Target Folder", targetFolder, typeof(DefaultAsset), false);
+                if (GUILayout.Button("Put in original folder", EditorStyles.miniButton, GUILayout.MaxWidth(120)))
+                {
+                    string profilePath = AssetDatabase.GetAssetPath(childProfile);
+                    targetFolder = AssetDatabase.LoadAssetAtPath<Object>(System.IO.Path.GetDirectoryName(profilePath));
+                }
             }
-            EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.HelpBox("If no folder is provided, the profile will be cloned to the Assets/MixedRealityToolkit.Generated/CustomProfiles folder.", MessageType.Info);
             childProfileAssetName = EditorGUILayout.TextField("Profile Name", childProfileAssetName);
 
-            EditorGUILayout.BeginHorizontal();
-
-            if (GUILayout.Button("Clone"))
+            using (new EditorGUILayout.HorizontalScope())
             {
-                targetFolder = EnsureTargetFolder(targetFolder);
-                CloneMainProfile();
-            }
-            if (GUILayout.Button("Cancel"))
-            {
-                cloneWindow.Close();
-            }
+                if (GUILayout.Button("Clone"))
+                {
+                    targetFolder = EnsureTargetFolder(targetFolder);
+                    CloneMainProfile();
+                }
 
-            EditorGUILayout.EndHorizontal();
+                if (GUILayout.Button("Cancel"))
+                {
+                    cloneWindow.Close();
+                }
+            }
 
             // If there are no sub profiles, limit the max so the window isn't spawned too large
             if (subProfileActions.Count <= 0 || !AdvancedMode)
@@ -374,7 +377,7 @@ namespace Microsoft.MixedReality.Toolkit.Editor
             System.Type type = null;
             foreach (Assembly assembly in System.AppDomain.CurrentDomain.GetAssemblies())
             {
-                foreach (System.Type checkType in assembly.GetTypes())
+                foreach (System.Type checkType in assembly.GetLoadableTypes())
                 {
                     if (checkType.Name == profileTypeName)
                     {
@@ -398,14 +401,15 @@ namespace Microsoft.MixedReality.Toolkit.Editor
                 return targetFolder;
             }
 
-            if (!AssetDatabase.IsValidFolder(DefaultCustomProfileFolder))
+            string customProfilesFolderPath = DefaultCustomProfileFolder;
+            if (!AssetDatabase.IsValidFolder(customProfilesFolderPath))
             {
                 // AssetDatabase.CreateFolder must be called to create each child of the asset folder
                 // path individually. 
-                // Calling AssetDatabase.CreateFolder("Assets", "MixedRealityToolkit.Generated/CustomProfiles")
-                // generates a folder that looks like "Assets/MixedRealityToolkit.Generated_CustomProfiles".
-                AssetDatabase.CreateFolder("Assets", "MixedRealityToolkit.Generated");
-                AssetDatabase.CreateFolder("Assets/MixedRealityToolkit.Generated", "CustomProfiles");
+
+                // If the packages have been imported via NugetForUnity, MixedRealityToolkitFiles.GetGeneratedFolder
+                // will also create the MixedRealityToolkit.Generated Folder and return the path to the folder.
+                AssetDatabase.CreateFolder(MixedRealityToolkitFiles.GetGeneratedFolder, "CustomProfiles");
             }
             return AssetDatabase.LoadAssetAtPath(DefaultCustomProfileFolder, typeof(Object));
         }
