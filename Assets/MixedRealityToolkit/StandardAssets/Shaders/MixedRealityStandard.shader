@@ -139,6 +139,7 @@ Shader "Mixed Reality Toolkit/Standard"
 			{
 				float4 vertex : SV_POSITION;
 				float2 uv : TEXCOORD0;
+				float4 color : COLOR;
 			};
 
 			float4 _MainTex_ST;
@@ -148,7 +149,7 @@ Shader "Mixed Reality Toolkit/Standard"
 				v2f o;
 				o.vertex = UnityMetaVertexPosition(v.vertex, v.texcoord1.xy, v.texcoord2.xy, unity_LightmapST, unity_DynamicLightmapST);
 				o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);
-
+  
 				return o;
 			}
 
@@ -339,7 +340,7 @@ Shader "Mixed Reality Toolkit/Standard"
 				float4 uv2 : TEXCOORD2;
 				// Used for UGUI scaling data.
 				float2 uv3 : TEXCOORD3;
-	#if defined(_VERTEX_COLORS)
+	#if defined(_VERTEX_COLORS) || defined(_MAT_CAP)
 				fixed4 color : COLOR0;
 	#endif
 				fixed3 normal : NORMAL;
@@ -360,7 +361,12 @@ Shader "Mixed Reality Toolkit/Standard"
 	#if defined(LIGHTMAP_ON)
 				float2 lightMapUV : TEXCOORD1;
 	#endif
-	#if defined(_VERTEX_COLORS)
+
+	#if defined(_MAT_CAP)
+					float2 cap	: TEXCOORD4;
+	#endif
+
+	#if defined(_VERTEX_COLORS)  || defined(_MAT_CAP)
 				fixed4 color : COLOR0;
 	#endif
 	#if defined(_SPHERICAL_HARMONICS)
@@ -708,8 +714,13 @@ Shader "Mixed Reality Toolkit/Standard"
 
 				fixed3 localNormal = v.normal;
 
-	#if defined(_NORMAL) || defined(_VERTEX_EXTRUSION)
+	#if defined(_NORMAL) || defined(_VERTEX_EXTRUSION) || defined(_MAT_CAP)
 				fixed3 worldNormal = UnityObjectToWorldNormal(localNormal);
+	#endif
+
+	#if defined(_MAT_CAP)
+				float3 viewNormal = mul((float3x3)UNITY_MATRIX_V, worldNormal);
+				o.cap.xy = viewNormal.xy * 0.5 + 0.5;
 	#endif
 
 	#if defined(_VERTEX_EXTRUSION)
@@ -819,7 +830,7 @@ Shader "Mixed Reality Toolkit/Standard"
 				o.lightMapUV.xy = v.uv1.xy * unity_LightmapST.xy + unity_LightmapST.zw;
 	#endif
 
-	#if defined(_VERTEX_COLORS)
+	#if defined(_VERTEX_COLORS) || defined(_MAT_CAP)
 				o.color = v.color;
 	#endif
 
@@ -1167,15 +1178,25 @@ Shader "Mixed Reality Toolkit/Standard"
 				fixed3 fresnelColor = unity_IndirectSpecColor.rgb * (pow(fresnel, _FresnelPower) * max(_Smoothness, 0.5));
 	#endif
 	#endif
+				// Final lighting mix.
+				fixed4 output = albedo;
 
 	#if defined(_MAT_CAP)
+	            float4 color = float4(0, 0, 0, 0);
+
+					if (i.color.a == 0) {
+						color = i.color;
+					}
+					else {
+						color = _Color;
+					}
+					
 				float4 mc = tex2D(_MatCap, i.cap);
-				mc = _Color * mc * _MatCapStrength;
+				mc = color * mc * _MatCapStrength;
 
 				output = float4(mc.rgb, albedo.a);
 	#endif
-				// Final lighting mix.
-				fixed4 output = albedo;
+				
 	#if defined(_SPHERICAL_HARMONICS)
 				fixed3 ambient = i.ambient;
 	#else
