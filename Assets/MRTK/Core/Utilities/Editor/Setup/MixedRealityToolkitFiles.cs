@@ -137,9 +137,19 @@ namespace Microsoft.MixedReality.Toolkit.Utilities.Editor
         /// <param name="absolutePath">The absolute path to the project.</param>
         /// <returns>The project relative path.</returns>
         /// <remarks>This doesn't produce paths that contain step out '..' relative paths.</remarks>
-        public static string GetAssetDatabasePath(string absolutePath) 
-            // Use Path.GetFullPath to ensure proper Path.DirectorySeparatorChar is used depending on our editor platform
-            => Path.GetFullPath(absolutePath)?.Replace(Path.GetFullPath(Application.dataPath), "Assets");
+        /// <remarks>Use Path.GetFullPath to ensure proper Path.DirectorySeparatorChar is used depending on our editor platform</remarks>
+        //public static string GetAssetDatabasePath(string absolutePath) => Path.GetFullPath(absolutePath)?.Replace(Path.GetFullPath(Application.dataPath), "Assets");
+
+        public static string GetAssetDatabasePath(string absolutePath)
+        {
+            if (absolutePath.Contains(MRTK_PACKAGE_ID(MixedRealityToolkitModuleType.Core)))
+            {
+                string packageRelativePath = absolutePath.Split(new string[] { MRTK_PACKAGE_ID(MixedRealityToolkitModuleType.Core) }, StringSplitOptions.None)[1];
+                return $"Packages/{MRTK_PACKAGE_ID(MixedRealityToolkitModuleType.Core)}" + packageRelativePath;
+            }
+
+            return Path.GetFullPath(absolutePath)?.Replace(Path.GetFullPath(Application.dataPath), "Assets");
+        }
 
         /// <summary>
         /// Returns a collection of MRTK Core directories found in the project.
@@ -164,6 +174,65 @@ namespace Microsoft.MixedReality.Toolkit.Utilities.Editor
                 return folders;
             }
             return null;
+        }
+
+        public const int DirectorySearchDepth = 3;
+
+        private static string MRTK_PACKAGE_ID(MixedRealityToolkitModuleType moduleType)
+        {
+            switch (moduleType)
+            {
+                case MixedRealityToolkitModuleType.Core:
+                    return "com.microsoft.mixedreality.toolkit";
+                case MixedRealityToolkitModuleType.Providers:
+                    return "com.microsoft.mixedreality.toolkit.providers";
+                case MixedRealityToolkitModuleType.Services:
+                    return "com.microsoft.mixedreality.toolkit.services";
+                case MixedRealityToolkitModuleType.SDK:
+                    return "com.microsoft.mixedreality.toolkit.sdk";
+                case MixedRealityToolkitModuleType.Tools:
+                    return "com.microsoft.mixedreality.toolkit.tools";
+                default:
+                    return null;
+            }
+        }
+
+        static MixedRealityToolkitFiles()
+        {
+            CheckForMrtkUpmPackages();
+            string path = Application.dataPath;
+            var searchForAssetsTask = Task.Run(() => SearchForFoldersAsync(path));
+            searchForFoldersTask = Task.WhenAll(new[] { searchForAssetsTask });
+        }
+
+        private static void CheckForMrtkUpmPackages()
+        {
+            if (AssetDatabase.IsValidFolder($"Packages/{MRTK_PACKAGE_ID(MixedRealityToolkitModuleType.Core)}"))
+            {
+                FindUPMPackageFolder(MixedRealityToolkitModuleType.Core);
+                FindUPMPackageFolder(MixedRealityToolkitModuleType.SDK);
+                FindUPMPackageFolder(MixedRealityToolkitModuleType.Services);
+                FindUPMPackageFolder(MixedRealityToolkitModuleType.Providers);
+                FindUPMPackageFolder(MixedRealityToolkitModuleType.Tools);
+            }
+        }
+
+        private static bool FindUPMPackageFolder(MixedRealityToolkitModuleType module)
+        {
+            if (AssetDatabase.IsValidFolder($"Packages/{MRTK_PACKAGE_ID(module)}"))
+            {
+                if (!mrtkFolders.TryGetValue(module, out HashSet<string> moduleFolders))
+                {
+                    moduleFolders = new HashSet<string>();
+                    mrtkFolders.Add(module, moduleFolders);
+                }
+                moduleFolders.Add(Path.GetFullPath($"Packages/{MRTK_PACKAGE_ID(module)}"));
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -192,10 +261,10 @@ namespace Microsoft.MixedReality.Toolkit.Utilities.Editor
             }
         }
 
-        static MixedRealityToolkitFiles()
-        {
-            Init();
-        }
+        //static MixedRealityToolkitFiles()
+        //{
+        //    Init();
+        //}
 
         private static void Init()
         {
@@ -213,10 +282,12 @@ namespace Microsoft.MixedReality.Toolkit.Utilities.Editor
         /// <remarks>
         /// Kicks off async refresh of the MRTK folder database.
         /// </remarks>
+        [MenuItem("Mixed Reality Toolkit/Refresh files")]
         public static void RefreshFolders()
         {
             string path = Application.dataPath;
             searchForFoldersTask = Task.Run(() => SearchForFoldersAsync(path));
+            CheckForMrtkUpmPackages();
         }
 
         /// <summary>
